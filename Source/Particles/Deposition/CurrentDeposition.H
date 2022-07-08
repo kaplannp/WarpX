@@ -269,39 +269,27 @@ void doDepositionShapeN(const GetParticlePosition& GetPosition,
             // Deposit current into jx_arr, jy_arr and jz_arr
 #if defined(WARPX_DIM_1D_Z)
             for (int iz=0; iz<=depos_order; iz++){
-                amrex::Gpu::Atomic::AddNoRet(
-                    &jx_arr(lo.x+l_jx+iz, 0, 0, 0),
-                    sz_jx[iz]*wqx);
-                amrex::Gpu::Atomic::AddNoRet(
-                    &jy_arr(lo.x+l_jy+iz, 0, 0, 0),
-                    sz_jy[iz]*wqy);
-                amrex::Gpu::Atomic::AddNoRet(
-                    &jz_arr(lo.x+l_jz+iz, 0, 0, 0),
-                    sz_jz[iz]*wqz);
+                    jx_arr(lo.x+l_jx+iz, 0, 0, 0) += sz_jx[iz]*wqx);
+                    jy_arr(lo.x+l_jy+iz, 0, 0, 0) += sz_jy[iz]*wqy);
+                    jz_arr(lo.x+l_jz+iz, 0, 0, 0) += sz_jz[iz]*wqz);
             }
 #endif
 #if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
             for (int iz=0; iz<=depos_order; iz++){
                 for (int ix=0; ix<=depos_order; ix++){
-                    amrex::Gpu::Atomic::AddNoRet(
-                        &jx_arr(lo.x+j_jx+ix, lo.y+l_jx+iz, 0, 0),
-                        sx_jx[ix]*sz_jx[iz]*wqx);
-                    amrex::Gpu::Atomic::AddNoRet(
-                        &jy_arr(lo.x+j_jy+ix, lo.y+l_jy+iz, 0, 0),
-                        sx_jy[ix]*sz_jy[iz]*wqy);
-                    amrex::Gpu::Atomic::AddNoRet(
-                        &jz_arr(lo.x+j_jz+ix, lo.y+l_jz+iz, 0, 0),
-                        sx_jz[ix]*sz_jz[iz]*wqz);
+                        jx_arr(lo.x+j_jx+ix, lo.y+l_jx+iz, 0, 0) += sx_jx[ix]*sz_jx[iz]*wqx);
+                        jy_arr(lo.x+j_jy+ix, lo.y+l_jy+iz, 0, 0) += sx_jy[ix]*sz_jy[iz]*wqy);
+                        jz_arr(lo.x+j_jz+ix, lo.y+l_jz+iz, 0, 0) += sx_jz[ix]*sz_jz[iz]*wqz);
 #if defined(WARPX_DIM_RZ)
                     Complex xy = xy0; // Note that xy is equal to e^{i m theta}
                     for (int imode=1 ; imode < n_rz_azimuthal_modes ; imode++) {
                         // The factor 2 on the weighting comes from the normalization of the modes
-                        amrex::Gpu::Atomic::AddNoRet( &jx_arr(lo.x+j_jx+ix, lo.y+l_jx+iz, 0, 2*imode-1), 2._rt*sx_jx[ix]*sz_jx[iz]*wqx*xy.real());
-                        amrex::Gpu::Atomic::AddNoRet( &jx_arr(lo.x+j_jx+ix, lo.y+l_jx+iz, 0, 2*imode  ), 2._rt*sx_jx[ix]*sz_jx[iz]*wqx*xy.imag());
-                        amrex::Gpu::Atomic::AddNoRet( &jy_arr(lo.x+j_jy+ix, lo.y+l_jy+iz, 0, 2*imode-1), 2._rt*sx_jy[ix]*sz_jy[iz]*wqy*xy.real());
-                        amrex::Gpu::Atomic::AddNoRet( &jy_arr(lo.x+j_jy+ix, lo.y+l_jy+iz, 0, 2*imode  ), 2._rt*sx_jy[ix]*sz_jy[iz]*wqy*xy.imag());
-                        amrex::Gpu::Atomic::AddNoRet( &jz_arr(lo.x+j_jz+ix, lo.y+l_jz+iz, 0, 2*imode-1), 2._rt*sx_jz[ix]*sz_jz[iz]*wqz*xy.real());
-                        amrex::Gpu::Atomic::AddNoRet( &jz_arr(lo.x+j_jz+ix, lo.y+l_jz+iz, 0, 2*imode  ), 2._rt*sx_jz[ix]*sz_jz[iz]*wqz*xy.imag());
+                        jx_arr(lo.x+j_jx+ix, lo.y+l_jx+iz, 0, 2*imode-1) += 2._rt*sx_jx[ix]*sz_jx[iz]*wqx*xy.real();
+                        jx_arr(lo.x+j_jx+ix, lo.y+l_jx+iz, 0, 2*imode  ) += 2._rt*sx_jx[ix]*sz_jx[iz]*wqx*xy.imag();
+                        jy_arr(lo.x+j_jy+ix, lo.y+l_jy+iz, 0, 2*imode-1) += 2._rt*sx_jy[ix]*sz_jy[iz]*wqy*xy.real();
+                        jy_arr(lo.x+j_jy+ix, lo.y+l_jy+iz, 0, 2*imode  ) += 2._rt*sx_jy[ix]*sz_jy[iz]*wqy*xy.imag();
+                        jz_arr(lo.x+j_jz+ix, lo.y+l_jz+iz, 0, 2*imode-1) += 2._rt*sx_jz[ix]*sz_jz[iz]*wqz*xy.real();
+                        jz_arr(lo.x+j_jz+ix, lo.y+l_jz+iz, 0, 2*imode  ) += 2._rt*sx_jz[ix]*sz_jz[iz]*wqz*xy.imag();
                         xy = xy*xy0;
                     }
 #endif
@@ -311,15 +299,9 @@ void doDepositionShapeN(const GetParticlePosition& GetPosition,
             for (int iz=0; iz<=depos_order; iz++){
                 for (int iy=0; iy<=depos_order; iy++){
                     for (int ix=0; ix<=depos_order; ix++){
-                        amrex::Gpu::Atomic::AddNoRet(
-                            &jx_arr(lo.x+j_jx+ix, lo.y+k_jx+iy, lo.z+l_jx+iz),
-                            sx_jx[ix]*sy_jx[iy]*sz_jx[iz]*wqx);
-                        amrex::Gpu::Atomic::AddNoRet(
-                            &jy_arr(lo.x+j_jy+ix, lo.y+k_jy+iy, lo.z+l_jy+iz),
-                            sx_jy[ix]*sy_jy[iy]*sz_jy[iz]*wqy);
-                        amrex::Gpu::Atomic::AddNoRet(
-                            &jz_arr(lo.x+j_jz+ix, lo.y+k_jz+iy, lo.z+l_jz+iz),
-                            sx_jz[ix]*sy_jz[iy]*sz_jz[iz]*wqz);
+                            jx_arr(lo.x+j_jx+ix, lo.y+k_jx+iy, lo.z+l_jx+iz) += sx_jx[ix]*sy_jx[iy]*sz_jx[iz]*wqx;
+                            jy_arr(lo.x+j_jy+ix, lo.y+k_jy+iy, lo.z+l_jy+iz) += sx_jy[ix]*sy_jy[iy]*sz_jy[iz]*wqy;
+                            jz_arr(lo.x+j_jz+ix, lo.y+k_jz+iy, lo.z+l_jz+iz) += sx_jz[ix]*sy_jz[iy]*sz_jz[iz]*wqz;
                     }
                 }
             }
