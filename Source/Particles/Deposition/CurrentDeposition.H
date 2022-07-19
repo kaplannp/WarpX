@@ -269,17 +269,17 @@ void doDepositionShapeN(const GetParticlePosition& GetPosition,
             // Deposit current into jx_arr, jy_arr and jz_arr
 #if defined(WARPX_DIM_1D_Z)
             for (int iz=0; iz<=depos_order; iz++){
-                    jx_arr(lo.x+l_jx+iz, 0, 0, 0) += sz_jx[iz]*wqx);
-                    jy_arr(lo.x+l_jy+iz, 0, 0, 0) += sz_jy[iz]*wqy);
-                    jz_arr(lo.x+l_jz+iz, 0, 0, 0) += sz_jz[iz]*wqz);
+                    jx_arr(lo.x+l_jx+iz, 0, 0, 0) += sz_jx[iz]*wqx;
+                    jy_arr(lo.x+l_jy+iz, 0, 0, 0) += sz_jy[iz]*wqy;
+                    jz_arr(lo.x+l_jz+iz, 0, 0, 0) += sz_jz[iz]*wqz;
             }
 #endif
 #if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
             for (int iz=0; iz<=depos_order; iz++){
                 for (int ix=0; ix<=depos_order; ix++){
-                        jx_arr(lo.x+j_jx+ix, lo.y+l_jx+iz, 0, 0) += sx_jx[ix]*sz_jx[iz]*wqx);
-                        jy_arr(lo.x+j_jy+ix, lo.y+l_jy+iz, 0, 0) += sx_jy[ix]*sz_jy[iz]*wqy);
-                        jz_arr(lo.x+j_jz+ix, lo.y+l_jz+iz, 0, 0) += sx_jz[ix]*sz_jz[iz]*wqz);
+                        jx_arr(lo.x+j_jx+ix, lo.y+l_jx+iz, 0, 0) += sx_jx[ix]*sz_jx[iz]*wqx;
+                        jy_arr(lo.x+j_jy+ix, lo.y+l_jy+iz, 0, 0) += sx_jy[ix]*sz_jy[iz]*wqy;
+                        jz_arr(lo.x+j_jz+ix, lo.y+l_jz+iz, 0, 0) += sx_jz[ix]*sz_jz[iz]*wqz;
 #if defined(WARPX_DIM_RZ)
                     Complex xy = xy0; // Note that xy is equal to e^{i m theta}
                     for (int imode=1 ; imode < n_rz_azimuthal_modes ; imode++) {
