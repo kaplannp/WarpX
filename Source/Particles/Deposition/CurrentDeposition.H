@@ -335,6 +335,61 @@ void doDepositionShapeN(const GetParticlePosition& GetPosition,
 #endif
 }
 
+#if defined(AMREX_USE_CUDA) || defined(AMREX_USE_HIP)
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+void addLocalToGlobal (const amrex::Box& bx_x,
+                       const amrex::Box& bx_y,
+                       const amrex::Box& bx_z,
+                       const amrex::Array4<amrex::Real>& global_x,
+                       const amrex::Array4<amrex::Real>& global_y,
+                       const amrex::Array4<amrex::Real>& global_z,
+                       const amrex::Array4<amrex::Real>& local_x,
+                       const amrex::Array4<amrex::Real>& local_y,
+                       const amrex::Array4<amrex::Real>& local_z) noexcept
+{
+    for (int index = threadIdx.x; index < bx_x.numPts() + bx_y.numPts() + bx_z.numPts(); index += blockDim.x)
+    {
+        if (index < bx_x.numPts()) {
+            int icell = index;
+            const auto lo  = amrex::lbound(bx_x);
+            const auto len = amrex::length(bx_x);
+            int k =  icell / (len.x*len.y);
+            int j = (icell - k*(len.x*len.y)) /   len.x;
+            int i = (icell - k*(len.x*len.y)) - j*len.x;
+            i += lo.x;
+            j += lo.y;
+            k += lo.z;
+            amrex::Gpu::Atomic::AddNoRet( &global_x(i, j, k), local_x(i, j, k));
+        }
+        else if (index < bx_y.numPts()) {
+            int icell = index - bx_x.numPts();
+            const auto lo  = amrex::lbound(bx_y);
+            const auto len = amrex::length(bx_y);
+            int k =  icell / (len.x*len.y);
+            int j = (icell - k*(len.x*len.y)) /   len.x;
+            int i = (icell - k*(len.x*len.y)) - j*len.x;
+            i += lo.x;
+            j += lo.y;
+            k += lo.z;
+            amrex::Gpu::Atomic::AddNoRet( &global_y(i, j, k), local_y(i, j, k));
+        }
+        else if (index < bx_z.numPts()) {
+            int icell = index - bx_x.numPts() - bx_y.numPts();
+            const auto lo  = amrex::lbound(bx_z);
+            const auto len = amrex::length(bx_z);
+            int k =  icell / (len.x*len.y);
+            int j = (icell - k*(len.x*len.y)) /   len.x;
+            int i = (icell - k*(len.x*len.y)) - j*len.x;
+            i += lo.x;
+            j += lo.y;
+            k += lo.z;
+            amrex::Gpu::Atomic::AddNoRet( &global_z(i, j, k), local_z(i, j, k));
+        }
+    }
+}
+#endif
+
+
 /**
  * \brief Current Deposition for thread thread_num using shared memory
  * \tparam depos_order deposition order
@@ -774,9 +829,7 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
         }
 #if defined(AMREX_USE_CUDA) || defined(AMREX_USE_HIP)
         __syncthreads();
-        addLocalToGlobal(tbox_x, jx_arr, jx_buff);
-        addLocalToGlobal(tbox_y, jy_arr, jy_buff);
-        addLocalToGlobal(tbox_z, jz_arr, jz_buff);
+        addLocalToGlobal(tbox_x, tbox_y, tbox_z, jx_arr, jy_arr, jz_arr, jx_buff, jy_buff, jz_buff);
 #endif
     }
     );
