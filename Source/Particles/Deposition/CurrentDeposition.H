@@ -597,12 +597,9 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
             }
             const Complex xy0 = Complex{costheta, sintheta};
             const amrex::Real wqx = wq*invvol*(+vx*costheta + vy*sintheta);
-            const amrex::Real wqy = wq*invvol*(-vx*sintheta + vy*costheta);
 #else
             const amrex::Real wqx = wq*invvol*vx;
-            const amrex::Real wqy = wq*invvol*vy;
 #endif
-            const amrex::Real wqz = wq*invvol*vz;
 
             // --- Compute shape factors
             Compute_shape_factor< depos_order > const compute_shape_factor;
@@ -643,8 +640,6 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
             }
 
             int const j_jx = ((jx_type[0] == NODE) ? j_node : j_cell);
-            int const j_jy = ((jy_type[0] == NODE) ? j_node : j_cell);
-            int const j_jz = ((jz_type[0] == NODE) ? j_node : j_cell);
 #endif //AMREX_SPACEDIM >= 2
 
 #if defined(WARPX_DIM_3D)
@@ -671,8 +666,7 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
                 sy_jz[iy] = ((jz_type[1] == NODE) ? amrex::Real(sy_node[iy]) : amrex::Real(sy_cell[iy]));
             }
             int const k_jx = ((jx_type[1] == NODE) ? k_node : k_cell);
-            int const k_jy = ((jy_type[1] == NODE) ? k_node : k_cell);
-            int const k_jz = ((jz_type[1] == NODE) ? k_node : k_cell);
+
 #endif
 
             // z direction
@@ -698,8 +692,6 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
                 sz_jz[iz] = ((jz_type[zdir] == NODE) ? amrex::Real(sz_node[iz]) : amrex::Real(sz_cell[iz]));
             }
             int const l_jx = ((jx_type[zdir] == NODE) ? l_node : l_cell);
-            int const l_jy = ((jy_type[zdir] == NODE) ? l_node : l_cell);
-            int const l_jz = ((jz_type[zdir] == NODE) ? l_node : l_cell);
 
             // Deposit current into jx_arr, jy_arr and jz_arr
 #if defined(WARPX_DIM_1D_Z)
@@ -793,13 +785,10 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
                 sintheta = 0._rt;
             }
             const Complex xy0 = Complex{costheta, sintheta};
-            const amrex::Real wqx = wq*invvol*(+vx*costheta + vy*sintheta);
             const amrex::Real wqy = wq*invvol*(-vx*sintheta + vy*costheta);
 #else
-            const amrex::Real wqx = wq*invvol*vx;
             const amrex::Real wqy = wq*invvol*vy;
 #endif
-            const amrex::Real wqz = wq*invvol*vz;
 
             // --- Compute shape factors
             Compute_shape_factor< depos_order > const compute_shape_factor;
@@ -839,9 +828,7 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
                 sx_jz[ix] = ((jz_type[0] == NODE) ? amrex::Real(sx_node[ix]) : amrex::Real(sx_cell[ix]));
             }
 
-            int const j_jx = ((jx_type[0] == NODE) ? j_node : j_cell);
             int const j_jy = ((jy_type[0] == NODE) ? j_node : j_cell);
-            int const j_jz = ((jz_type[0] == NODE) ? j_node : j_cell);
 #endif //AMREX_SPACEDIM >= 2
 
 #if defined(WARPX_DIM_3D)
@@ -867,9 +854,7 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
                 sy_jy[iy] = ((jy_type[1] == NODE) ? amrex::Real(sy_node[iy]) : amrex::Real(sy_cell[iy]));
                 sy_jz[iy] = ((jz_type[1] == NODE) ? amrex::Real(sy_node[iy]) : amrex::Real(sy_cell[iy]));
             }
-            int const k_jx = ((jx_type[1] == NODE) ? k_node : k_cell);
             int const k_jy = ((jy_type[1] == NODE) ? k_node : k_cell);
-            int const k_jz = ((jz_type[1] == NODE) ? k_node : k_cell);
 #endif
 
             // z direction
@@ -894,9 +879,7 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
                 sz_jy[iz] = ((jy_type[zdir] == NODE) ? amrex::Real(sz_node[iz]) : amrex::Real(sz_cell[iz]));
                 sz_jz[iz] = ((jz_type[zdir] == NODE) ? amrex::Real(sz_node[iz]) : amrex::Real(sz_cell[iz]));
             }
-            int const l_jx = ((jx_type[zdir] == NODE) ? l_node : l_cell);
             int const l_jy = ((jy_type[zdir] == NODE) ? l_node : l_cell);
-            int const l_jz = ((jz_type[zdir] == NODE) ? l_node : l_cell);
 
             // Deposit current into jx_arr, jy_arr and jz_arr
 #if defined(WARPX_DIM_1D_Z)
@@ -972,28 +955,6 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
             const amrex::Real vy  = uyp[ip]*gaminv;
             const amrex::Real vz  = uzp[ip]*gaminv;
             // wqx, wqy wqz are particle current in each direction
-#if defined(WARPX_DIM_RZ)
-            // In RZ, wqx is actually wqr, and wqy is wqtheta
-            // Convert to cylinderical at the mid point
-            const amrex::Real xpmid = xp + relative_time*vx;
-            const amrex::Real ypmid = yp + relative_time*vy;
-            const amrex::Real rpmid = std::sqrt(xpmid*xpmid + ypmid*ypmid);
-            amrex::Real costheta;
-            amrex::Real sintheta;
-            if (rpmid > 0._rt) {
-                costheta = xpmid/rpmid;
-                sintheta = ypmid/rpmid;
-            } else {
-                costheta = 1._rt;
-                sintheta = 0._rt;
-            }
-            const Complex xy0 = Complex{costheta, sintheta};
-            const amrex::Real wqx = wq*invvol*(+vx*costheta + vy*sintheta);
-            const amrex::Real wqy = wq*invvol*(-vx*sintheta + vy*costheta);
-#else
-            const amrex::Real wqx = wq*invvol*vx;
-            const amrex::Real wqy = wq*invvol*vy;
-#endif
             const amrex::Real wqz = wq*invvol*vz;
 
             // --- Compute shape factors
@@ -1034,8 +995,6 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
                 sx_jz[ix] = ((jz_type[0] == NODE) ? amrex::Real(sx_node[ix]) : amrex::Real(sx_cell[ix]));
             }
 
-            int const j_jx = ((jx_type[0] == NODE) ? j_node : j_cell);
-            int const j_jy = ((jy_type[0] == NODE) ? j_node : j_cell);
             int const j_jz = ((jz_type[0] == NODE) ? j_node : j_cell);
 #endif //AMREX_SPACEDIM >= 2
 
@@ -1062,9 +1021,8 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
                 sy_jy[iy] = ((jy_type[1] == NODE) ? amrex::Real(sy_node[iy]) : amrex::Real(sy_cell[iy]));
                 sy_jz[iy] = ((jz_type[1] == NODE) ? amrex::Real(sy_node[iy]) : amrex::Real(sy_cell[iy]));
             }
-            int const k_jx = ((jx_type[1] == NODE) ? k_node : k_cell);
-            int const k_jy = ((jy_type[1] == NODE) ? k_node : k_cell);
             int const k_jz = ((jz_type[1] == NODE) ? k_node : k_cell);
+
 #endif
 
             // z direction
@@ -1089,8 +1047,6 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
                 sz_jy[iz] = ((jy_type[zdir] == NODE) ? amrex::Real(sz_node[iz]) : amrex::Real(sz_cell[iz]));
                 sz_jz[iz] = ((jz_type[zdir] == NODE) ? amrex::Real(sz_node[iz]) : amrex::Real(sz_cell[iz]));
             }
-            int const l_jx = ((jx_type[zdir] == NODE) ? l_node : l_cell);
-            int const l_jy = ((jy_type[zdir] == NODE) ? l_node : l_cell);
             int const l_jz = ((jz_type[zdir] == NODE) ? l_node : l_cell);
 
             // Deposit current into jx_arr, jy_arr and jz_arr
