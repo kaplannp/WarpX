@@ -630,13 +630,9 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
             }
 
             amrex::Real sx_jx[depos_order + 1] = {0._rt};
-            amrex::Real sx_jy[depos_order + 1] = {0._rt};
-            amrex::Real sx_jz[depos_order + 1] = {0._rt};
             for (int ix=0; ix<=depos_order; ix++)
             {
                 sx_jx[ix] = ((jx_type[0] == NODE) ? amrex::Real(sx_node[ix]) : amrex::Real(sx_cell[ix]));
-                sx_jy[ix] = ((jy_type[0] == NODE) ? amrex::Real(sx_node[ix]) : amrex::Real(sx_cell[ix]));
-                sx_jz[ix] = ((jz_type[0] == NODE) ? amrex::Real(sx_node[ix]) : amrex::Real(sx_cell[ix]));
             }
 
             int const j_jx = ((jx_type[0] == NODE) ? j_node : j_cell);
@@ -845,14 +841,10 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
             if (jx_type[1] == CELL || jy_type[1] == CELL || jz_type[1] == CELL) {
                 k_cell = compute_shape_factor(sy_cell, ymid - 0.5);
             }
-            amrex::Real sy_jx[depos_order + 1] = {0._rt};
             amrex::Real sy_jy[depos_order + 1] = {0._rt};
-            amrex::Real sy_jz[depos_order + 1] = {0._rt};
             for (int iy=0; iy<=depos_order; iy++)
             {
-                sy_jx[iy] = ((jx_type[1] == NODE) ? amrex::Real(sy_node[iy]) : amrex::Real(sy_cell[iy]));
                 sy_jy[iy] = ((jy_type[1] == NODE) ? amrex::Real(sy_node[iy]) : amrex::Real(sy_cell[iy]));
-                sy_jz[iy] = ((jz_type[1] == NODE) ? amrex::Real(sy_node[iy]) : amrex::Real(sy_cell[iy]));
             }
             int const k_jy = ((jy_type[1] == NODE) ? k_node : k_cell);
 #endif
@@ -1014,13 +1006,9 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
             if (jx_type[1] == CELL || jy_type[1] == CELL || jz_type[1] == CELL) {
                 k_cell = compute_shape_factor(sy_cell, ymid - 0.5);
             }
-            amrex::Real sy_jx[depos_order + 1] = {0._rt};
-            amrex::Real sy_jy[depos_order + 1] = {0._rt};
             amrex::Real sy_jz[depos_order + 1] = {0._rt};
             for (int iy=0; iy<=depos_order; iy++)
             {
-                sy_jx[iy] = ((jx_type[1] == NODE) ? amrex::Real(sy_node[iy]) : amrex::Real(sy_cell[iy]));
-                sy_jy[iy] = ((jy_type[1] == NODE) ? amrex::Real(sy_node[iy]) : amrex::Real(sy_cell[iy]));
                 sy_jz[iy] = ((jz_type[1] == NODE) ? amrex::Real(sy_node[iy]) : amrex::Real(sy_cell[iy]));
             }
             int const k_jz = ((jz_type[1] == NODE) ? k_node : k_cell);
