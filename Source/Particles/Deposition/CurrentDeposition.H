@@ -577,7 +577,9 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
             GetPosition(ip, xp, yp, zp);
 
             const amrex::Real vx  = uxp[ip]*gaminv;
+#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_3D)
             const amrex::Real vy  = uyp[ip]*gaminv;
+#endif
             const amrex::Real vz  = uzp[ip]*gaminv;
             // wqx, wqy wqz are particle current in each direction
 #if defined(WARPX_DIM_RZ)
@@ -753,7 +755,9 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
             amrex::ParticleReal xp, yp, zp;
             GetPosition(ip, xp, yp, zp);
 
+#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RZ) || defined(WARPX_DIM_3D)
             const amrex::Real vx  = uxp[ip]*gaminv;
+#endif
             const amrex::Real vy  = uyp[ip]*gaminv;
             const amrex::Real vz  = uzp[ip]*gaminv;
             // wqx, wqy wqz are particle current in each direction
@@ -928,9 +932,12 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
 
             amrex::ParticleReal xp, yp, zp;
             GetPosition(ip, xp, yp, zp);
-
+#if !defined(WARPX_DIM_RZ) && (defined(WARPX_DIM_RZ) || defined(WARPX_DIM_3D))
             const amrex::Real vx  = uxp[ip]*gaminv;
+#endif
+#if defined(WARPX_DIM_3D)
             const amrex::Real vy  = uyp[ip]*gaminv;
+#endif
             const amrex::Real vz  = uzp[ip]*gaminv;
             // wqx, wqy wqz are particle current in each direction
             const amrex::Real wqz = wq*invvol*vz;
