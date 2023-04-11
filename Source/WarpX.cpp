@@ -147,6 +147,7 @@ amrex::IntVect WarpX::shared_tilesize(AMREX_D_DECL(14,14));
 amrex::IntVect WarpX::shared_tilesize(AMREX_D_DECL(0,0,0)); //Not used
 #endif
 int WarpX::shared_mem_current_tpb = 128;
+int WarpX::shared_mem_bytes = 0;
 
 amrex::Vector<int> WarpX::field_boundary_lo(AMREX_SPACEDIM,0);
 amrex::Vector<int> WarpX::field_boundary_hi(AMREX_SPACEDIM,0);
@@ -792,6 +793,7 @@ WarpX::ReadParameters ()
                 "requested shared memory for current deposition, but shared memory is only available for CUDA or HIP");
 #endif
         pp_warpx.query("shared_mem_current_tpb", shared_mem_current_tpb);
+        pp_warpx.query("shared_mem_bytes", shared_mem_bytes);
 
         // initialize the shared tilesize
         Vector<int> vect_shared_tilesize(AMREX_SPACEDIM, 1);
