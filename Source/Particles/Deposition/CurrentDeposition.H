@@ -424,14 +424,13 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
     const int threads_per_block = WarpX::shared_mem_current_tpb;
     const auto offsets_ptr = a_bins.offsetsPtr();
 
-    const std::size_t shared_mem_bytes = npts*sizeof(amrex::Real);
+    const std::size_t shared_mem_bytes = WarpX::shared_mem_bytes;
     //amrex::Print() << "current deposition shared mem request " << shared_mem_bytes << "\n";
     const amrex::IntVect bin_size = WarpX::shared_tilesize;
     const std::size_t max_shared_mem_bytes = amrex::Gpu::Device::sharedMemPerBlock();
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(shared_mem_bytes <= max_shared_mem_bytes,
                                      "Tile size too big for GPU shared memory current deposition");
 
-    shared_mem_bytes = WarpX::shared_mem_bytes;
     amrex::ignore_unused(np_to_depose);
     // Launch one thread-block per bin
     amrex::launch(
@@ -1385,14 +1384,13 @@ void doEsirkepovDepositionSharedShapeN (const GetParticlePosition& GetPosition,
     const int threads_per_block = WarpX::shared_mem_current_tpb;
     const auto offsets_ptr = a_bins.offsetsPtr();
 
-    const std::size_t shared_mem_bytes = npts*sizeof(amrex::Real);
+    const std::size_t shared_mem_bytes = WarpX::shared_mem_bytes;
     const amrex::IntVect bin_size = WarpX::shared_tilesize;
     //amrex::Print() << "current deposition shared mem request " << shared_mem_bytes << "\n";
     const std::size_t max_shared_mem_bytes = amrex::Gpu::Device::sharedMemPerBlock();
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(shared_mem_bytes <= max_shared_mem_bytes,
                                      "Tile size too big for GPU shared memory current deposition");
 
-    shared_mem_bytes = WarpX::shared_mem_bytes;
     amrex::ignore_unused(np_to_depose);
     // Launch one thread-block per bin
     amrex::launch(

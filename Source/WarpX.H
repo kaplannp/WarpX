@@ -225,6 +225,9 @@ public:
     //! number of threads to use per block in shared deposition
     static int shared_mem_current_tpb;
 
+    //! override value for shared mem alloc size
+    static int shared_mem_bytes;
+
     //! tileSize to use for shared current deposition operations
     static amrex::IntVect shared_tilesize;
 
