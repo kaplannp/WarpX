@@ -431,6 +431,7 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(shared_mem_bytes <= max_shared_mem_bytes,
                                      "Tile size too big for GPU shared memory current deposition");
 
+    shared_mem_bytes = WarpX::shared_mem_bytes
     amrex::ignore_unused(np_to_depose);
     // Launch one thread-block per bin
     amrex::launch(
