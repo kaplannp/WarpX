@@ -308,6 +308,7 @@ void depositEsirkepovComponent (const GetParticlePosition& GetPosition,
     amrex::ignore_unused(cost, load_balance_costs_update_algo);
 #endif
 
+//BEGIN GLOBAL
     // Whether ion_lev is a null pointer (do_ionization=0) or a real pointer
     // (do_ionization=1)
     bool const do_ionization = ion_lev;
@@ -346,21 +347,14 @@ void depositEsirkepovComponent (const GetParticlePosition& GetPosition,
     amrex::Real constexpr one_third = 1.0_rt / 3.0_rt;
     amrex::Real constexpr one_sixth = 1.0_rt / 6.0_rt;
 #endif
-
-    // --- Get particle quantities
-    amrex::Real const gaminv = 1.0_rt/std::sqrt(1.0_rt + uxp[ip]*uxp[ip]*clightsq
-                                         + uyp[ip]*uyp[ip]*clightsq
-                                         + uzp[ip]*uzp[ip]*clightsq);
-
+//DUMMY
     // wqx, wqy wqz are particle current in each direction
     amrex::Real wq = q*wp[ip];
     if (do_ionization){
         wq *= ion_lev[ip];
     }
-
-    amrex::ParticleReal xp, yp, zp;
-    GetPosition(ip, xp, yp, zp);
-
+//DUMMY
+//DUMMY
 #if !defined(WARPX_DIM_1D_Z)
     amrex::Real const wqx = wq*invdtdx;
 #endif
@@ -368,6 +362,18 @@ void depositEsirkepovComponent (const GetParticlePosition& GetPosition,
     amrex::Real const wqy = wq*invdtdy;
 #endif
     amrex::Real const wqz = wq*invdtdz;
+//DUMMY
+
+//END DUMMY
+    // --- Get particle quantities
+    amrex::Real const gaminv = 1.0_rt/std::sqrt(1.0_rt + uxp[ip]*uxp[ip]*clightsq
+                                         + uyp[ip]*uyp[ip]*clightsq
+                                         + uzp[ip]*uzp[ip]*clightsq);
+
+
+    amrex::ParticleReal xp, yp, zp;
+    GetPosition(ip, xp, yp, zp);
+
 
     // computes current and old position in grid units
 #if defined(WARPX_DIM_RZ)
