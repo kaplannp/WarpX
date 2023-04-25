@@ -1,3 +1,4 @@
+#define UGLY_SIZE 7
 /* Copyright 2022 Noah Kaplan, Andrew Myers, Phil Miller
  *
  * This file is part of WarpX.
@@ -816,6 +817,7 @@ void depositEsirkepovComponentX (const GetParticlePosition& GetPosition,
         printf("UH OH!!! Your ugly array was not big enough for k, %d\n", (depos_order+2 - dku));
 
     for (int k=dkl; k<=depos_order+2-dku; k++) {
+        memset(sdxis, 0._rt, sizeof(sdxis));
         for (int i=dil; i<=depos_order+1-diu; i++) {
             for (int j=djl; j<=depos_order+2-dju; j++) {
                 sdxis[j] += wqx*(sx_old[i] - sx_new[i])*(
@@ -1064,6 +1066,7 @@ void depositEsirkepovComponentY (const GetParticlePosition& GetPosition,
         printf("UH OH!!! Your ugly array was not big enough for k, %d\n", (depos_order+2 - dku));
 
     for (int k=dkl; k<=depos_order+2-dku; k++) {
+        memset(sdyjs, 0._rt, sizeof(sdyjs));
         for (int j=djl; j<=depos_order+1-dju; j++) {
             for (int i=dil; i<=depos_order+2-diu; i++) {
                 sdyjs[i] += wqy*(sy_old[j] - sy_new[j])*(
@@ -1303,6 +1306,7 @@ void depositEsirkepovComponentZ (const GetParticlePosition& GetPosition,
         printf("UH OH!!! Your ugly array was not big enough for k, %d\n", (depos_order+2 - dku));
 
     for (int j=djl; j<=depos_order+2-dju; j++) {
+        memset(sdzks, 0._rt, sizeof(sdzks));
         for (int k=dkl; k<=depos_order+1-dku; k++) {
             for (int i=dil; i<=depos_order+2-diu; i++) {
                 sdzks[i] += wqz*(sz_old[k] - sz_new[k])*(
