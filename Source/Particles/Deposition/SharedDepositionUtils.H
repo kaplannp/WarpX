@@ -1,3 +1,4 @@
+#define UGLY_SIZE 7
 /* Copyright 2022 Noah Kaplan, Andrew Myers, Phil Miller
  *
  * This file is part of WarpX.
@@ -810,14 +811,38 @@ void depositEsirkepovComponentX (const GetParticlePosition& GetPosition,
 
 #if defined(WARPX_DIM_3D)
 
-    for (int k=dkl; k<=depos_order+2-dku; k++) {
+    //TODO I believe the following is correct, but only worth working on if we 
+    //get a speedup without correctness
+    //
+    ////NOTE no dynamic mem alloc, I'm just creating an array of max size, and 
+    ////prob still faster cause it's so small
+    ////int sdxiSize = (depos_order+2-dju) - djl; 
+    //amrex::Real sdxis[UGLY_SIZE][UGLY_SIZE] = 0;
+    //memset(sdxis, 0, sizeof(sdxis));
+    //if ((depos_order+2 - dku) > UGLY_SIZE)
+    //    printf("UH OH!!! Your ugly array was not big enough for k, %d\n", (depos_order+2 - dku));
+    //if ((depos_order+2 - dju) > UGLY_SIZE)
+    //    printf("UH OH!!! Your ugly array was not big enough for j, %d\n", (depos_order+2 - dju));
+
+    //for (int i=dil; i<=depos_order+1-diu; i++) {
+    //    for (int j=djl; j<=depos_order+2-dju; j++) {
+    //        for (int k=dkl; k<=depos_order+2-dku; k++) {
+    //            sdxis[k] += wqx*(sx_old[i] - sx_new[i])*(
+    //                one_third*(sy_new[j]*sz_new[k] + sy_old[j]*sz_old[k])
+    //               +one_sixth*(sy_new[j]*sz_old[k] + sy_old[j]*sz_new[k]));
+    //            amrex::Gpu::Atomic::AddNoRet( &j_buff(lo.x+i_new-1+i, lo.y+j_new-1+j, lo.z+k_new-1+k), sdxis[k]);
+    //        }
+    //    }
+    //}
+
+    for (int i=dil; i<=depos_order+1-diu; i++) {
         for (int j=djl; j<=depos_order+2-dju; j++) {
             amrex::Real sdxi = 0._rt;
-            for (int i=dil; i<=depos_order+1-diu; i++) {
+            for (int k=dkl; k<=depos_order+2-dku; k++) {
                 sdxi += wqx*(sx_old[i] - sx_new[i])*(
                     one_third*(sy_new[j]*sz_new[k] + sy_old[j]*sz_old[k])
                    +one_sixth*(sy_new[j]*sz_old[k] + sy_old[j]*sz_new[k]));
-                amrex::Gpu::Atomic::AddNoRet( &j_buff(lo.x+i_new-1+i, lo.y+j_new-1+j, lo.z+k_new-1+k), sdxi);
+                amrex::Gpu::Atomic::AddNoRet( &j_buff(lo.x+i_new-1+i, lo.y+j_new-1+j, lo.z+k_new-1+k), sdxis[k]);
             }
         }
     }
