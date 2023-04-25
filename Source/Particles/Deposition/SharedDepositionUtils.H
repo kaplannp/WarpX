@@ -842,7 +842,7 @@ void depositEsirkepovComponentX (const GetParticlePosition& GetPosition,
                 sdxi += wqx*(sx_old[i] - sx_new[i])*(
                     one_third*(sy_new[j]*sz_new[k] + sy_old[j]*sz_old[k])
                    +one_sixth*(sy_new[j]*sz_old[k] + sy_old[j]*sz_new[k]));
-                amrex::Gpu::Atomic::AddNoRet( &j_buff(lo.x+i_new-1+i, lo.y+j_new-1+j, lo.z+k_new-1+k), sdxis[k]);
+                amrex::Gpu::Atomic::AddNoRet( &j_buff(lo.x+i_new-1+i, lo.y+j_new-1+j, lo.z+k_new-1+k), sdxi);
             }
         }
     }
