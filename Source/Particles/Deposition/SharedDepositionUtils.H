@@ -1056,9 +1056,9 @@ void depositEsirkepovComponentY (const GetParticlePosition& GetPosition,
 #if defined(WARPX_DIM_3D)
 
     for (int k=dkl; k<=depos_order+2-dku; k++) {
-        for (int i=dil; i<=depos_order+2-diu; i++) {
+        for (int j=djl; j<=depos_order+1-dju; j++) {
             amrex::Real sdyj = 0._rt;
-            for (int j=djl; j<=depos_order+1-dju; j++) {
+            for (int i=dil; i<=depos_order+2-diu; i++) {
                 sdyj += wqy*(sy_old[j] - sy_new[j])*(
                     one_third*(sx_new[i]*sz_new[k] + sx_old[i]*sz_old[k])
                    +one_sixth*(sx_new[i]*sz_old[k] + sx_old[i]*sz_new[k]));
@@ -1292,9 +1292,9 @@ void depositEsirkepovComponentZ (const GetParticlePosition& GetPosition,
 #if defined(WARPX_DIM_3D)
 
     for (int j=djl; j<=depos_order+2-dju; j++) {
-        for (int i=dil; i<=depos_order+2-diu; i++) {
+        for (int k=dkl; k<=depos_order+1-dku; k++) {
             amrex::Real sdzk = 0._rt;
-            for (int k=dkl; k<=depos_order+1-dku; k++) {
+            for (int i=dil; i<=depos_order+2-diu; i++) {
                 sdzk += wqz*(sz_old[k] - sz_new[k])*(
                     one_third*(sx_new[i]*sy_new[j] + sx_old[i]*sy_old[j])
                    +one_sixth*(sx_new[i]*sy_old[j] + sx_old[i]*sy_new[j]));
