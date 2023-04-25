@@ -811,9 +811,9 @@ void depositEsirkepovComponentX (const GetParticlePosition& GetPosition,
 #if defined(WARPX_DIM_3D)
 
     for (int k=dkl; k<=depos_order+2-dku; k++) {
-        for (int j=djl; j<=depos_order+2-dju; j++) {
+        for (int i=dil; i<=depos_order+1-diu; i++) {
             amrex::Real sdxi = 0._rt;
-            for (int i=dil; i<=depos_order+1-diu; i++) {
+            for (int j=djl; j<=depos_order+2-dju; j++) {
                 sdxi += wqx*(sx_old[i] - sx_new[i])*(
                     one_third*(sy_new[j]*sz_new[k] + sy_old[j]*sz_old[k])
                    +one_sixth*(sy_new[j]*sz_old[k] + sy_old[j]*sz_new[k]));
