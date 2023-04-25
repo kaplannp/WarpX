@@ -810,14 +810,18 @@ void depositEsirkepovComponentX (const GetParticlePosition& GetPosition,
 
 #if defined(WARPX_DIM_3D)
 
+    amrex::Real sdxis[UGLY_SIZE];
+    memset(sdxis, 0._rt, sizeof(sdxis));
+    if ((depos_order+2 - dju) > UGLY_SIZE)
+        printf("UH OH!!! Your ugly array was not big enough for k, %d\n", (depos_order+2 - dku));
+
     for (int k=dkl; k<=depos_order+2-dku; k++) {
         for (int i=dil; i<=depos_order+1-diu; i++) {
-            amrex::Real sdxi = 0._rt;
             for (int j=djl; j<=depos_order+2-dju; j++) {
-                sdxi += wqx*(sx_old[i] - sx_new[i])*(
+                sdxis[j] += wqx*(sx_old[i] - sx_new[i])*(
                     one_third*(sy_new[j]*sz_new[k] + sy_old[j]*sz_old[k])
                    +one_sixth*(sy_new[j]*sz_old[k] + sy_old[j]*sz_new[k]));
-                amrex::Gpu::Atomic::AddNoRet( &j_buff(lo.x+i_new-1+i, lo.y+j_new-1+j, lo.z+k_new-1+k), sdxi);
+                amrex::Gpu::Atomic::AddNoRet( &j_buff(lo.x+i_new-1+i, lo.y+j_new-1+j, lo.z+k_new-1+k), sdxis[j]);
             }
         }
     }
@@ -1054,15 +1058,18 @@ void depositEsirkepovComponentY (const GetParticlePosition& GetPosition,
     if (k_old > k_new) dku = 0;
 
 #if defined(WARPX_DIM_3D)
+    amrex::Real sdyjs[UGLY_SIZE];
+    memset(sdyjs, 0._rt, sizeof(sdyjs));
+    if ((depos_order+2 - diu) > UGLY_SIZE)
+        printf("UH OH!!! Your ugly array was not big enough for k, %d\n", (depos_order+2 - dku));
 
     for (int k=dkl; k<=depos_order+2-dku; k++) {
         for (int j=djl; j<=depos_order+1-dju; j++) {
-            amrex::Real sdyj = 0._rt;
             for (int i=dil; i<=depos_order+2-diu; i++) {
-                sdyj += wqy*(sy_old[j] - sy_new[j])*(
+                sdyjs[i] += wqy*(sy_old[j] - sy_new[j])*(
                     one_third*(sx_new[i]*sz_new[k] + sx_old[i]*sz_old[k])
                    +one_sixth*(sx_new[i]*sz_old[k] + sx_old[i]*sz_new[k]));
-                amrex::Gpu::Atomic::AddNoRet( &j_buff(lo.x+i_new-1+i, lo.y+j_new-1+j, lo.z+k_new-1+k), sdyj);
+                amrex::Gpu::Atomic::AddNoRet( &j_buff(lo.x+i_new-1+i, lo.y+j_new-1+j, lo.z+k_new-1+k), sdyjs[i]);
             }
         }
     }
@@ -1290,15 +1297,18 @@ void depositEsirkepovComponentZ (const GetParticlePosition& GetPosition,
     if (k_old > k_new) dku = 0;
 
 #if defined(WARPX_DIM_3D)
+    amrex::Real sdzks[UGLY_SIZE];
+    memset(sdzks, 0._rt, sizeof(sdzks));
+    if ((depos_order+2 - diu) > UGLY_SIZE)
+        printf("UH OH!!! Your ugly array was not big enough for k, %d\n", (depos_order+2 - dku));
 
     for (int j=djl; j<=depos_order+2-dju; j++) {
         for (int k=dkl; k<=depos_order+1-dku; k++) {
-            amrex::Real sdzk = 0._rt;
             for (int i=dil; i<=depos_order+2-diu; i++) {
-                sdzk += wqz*(sz_old[k] - sz_new[k])*(
+                sdzks[i] += wqz*(sz_old[k] - sz_new[k])*(
                     one_third*(sx_new[i]*sy_new[j] + sx_old[i]*sy_old[j])
                    +one_sixth*(sx_new[i]*sy_old[j] + sx_old[i]*sy_new[j]));
-                amrex::Gpu::Atomic::AddNoRet( &j_buff(lo.x+i_new-1+i, lo.y+j_new-1+j, lo.z+k_new-1+k), sdzk);
+                amrex::Gpu::Atomic::AddNoRet( &j_buff(lo.x+i_new-1+i, lo.y+j_new-1+j, lo.z+k_new-1+k), sdzks[i]);
             }
         }
     }
