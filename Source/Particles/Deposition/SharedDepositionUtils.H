@@ -810,20 +810,17 @@ void depositEsirkepovComponentX (const GetParticlePosition& GetPosition,
     if (k_old > k_new) dku = 0;
 
 #if defined(WARPX_DIM_3D)
-
-    amrex::Real sdxis[UGLY_SIZE];
-    memset(sdxis, 0._rt, sizeof(sdxis));
-    if ((depos_order+2 - dju) > UGLY_SIZE)
-        printf("UH OH!!! Your ugly array was not big enough for k, %d\n", (depos_order+2 - dku));
-
+    //SWAPX
     for (int k=dkl; k<=depos_order+2-dku; k++) {
-        memset(sdxis, 0._rt, sizeof(sdxis));
         for (int i=dil; i<=depos_order+1-diu; i++) {
             for (int j=djl; j<=depos_order+2-dju; j++) {
-                sdxis[j] += wqx*(sx_old[i] - sx_new[i])*(
-                    one_third*(sy_new[j]*sz_new[k] + sy_old[j]*sz_old[k])
-                   +one_sixth*(sy_new[j]*sz_old[k] + sy_old[j]*sz_new[k]));
-                amrex::Gpu::Atomic::AddNoRet( &j_buff(lo.x+i_new-1+i, lo.y+j_new-1+j, lo.z+k_new-1+k), sdxis[j]);
+                amrex::Real sdxi = 0;
+                for (int inI=dil; inI<=i; inI++){
+                    sdxi += wqx*(sx_old[inI] - sx_new[inI])*(
+                        one_third*(sy_new[j]*sz_new[k] + sy_old[j]*sz_old[k])
+                       +one_sixth*(sy_new[j]*sz_old[k] + sy_old[j]*sz_new[k]));
+                }
+                amrex::Gpu::Atomic::AddNoRet( &j_buff(lo.x+i_new-1+i, lo.y+j_new-1+j, lo.z+k_new-1+k), sdxi);
             }
         }
     }
@@ -1060,19 +1057,17 @@ void depositEsirkepovComponentY (const GetParticlePosition& GetPosition,
     if (k_old > k_new) dku = 0;
 
 #if defined(WARPX_DIM_3D)
-    amrex::Real sdyjs[UGLY_SIZE];
-    memset(sdyjs, 0._rt, sizeof(sdyjs));
-    if ((depos_order+2 - diu) > UGLY_SIZE)
-        printf("UH OH!!! Your ugly array was not big enough for k, %d\n", (depos_order+2 - dku));
-
+    //SWAPY
     for (int k=dkl; k<=depos_order+2-dku; k++) {
-        memset(sdyjs, 0._rt, sizeof(sdyjs));
         for (int j=djl; j<=depos_order+1-dju; j++) {
             for (int i=dil; i<=depos_order+2-diu; i++) {
-                sdyjs[i] += wqy*(sy_old[j] - sy_new[j])*(
-                    one_third*(sx_new[i]*sz_new[k] + sx_old[i]*sz_old[k])
-                   +one_sixth*(sx_new[i]*sz_old[k] + sx_old[i]*sz_new[k]));
-                amrex::Gpu::Atomic::AddNoRet( &j_buff(lo.x+i_new-1+i, lo.y+j_new-1+j, lo.z+k_new-1+k), sdyjs[i]);
+                amrex::Real sdyj = 0;
+                for (int inJ=djl; inJ<=j; inJ++){
+                    sdyj += wqy*(sy_old[inJ] - sy_new[inJ])*(
+                        one_third*(sx_new[i]*sz_new[k] + sx_old[i]*sz_old[k])
+                       +one_sixth*(sx_new[i]*sz_old[k] + sx_old[i]*sz_new[k]));
+                }
+                amrex::Gpu::Atomic::AddNoRet( &j_buff(lo.x+i_new-1+i, lo.y+j_new-1+j, lo.z+k_new-1+k), sdyj);
             }
         }
     }
@@ -1300,19 +1295,17 @@ void depositEsirkepovComponentZ (const GetParticlePosition& GetPosition,
     if (k_old > k_new) dku = 0;
 
 #if defined(WARPX_DIM_3D)
-    amrex::Real sdzks[UGLY_SIZE];
-    memset(sdzks, 0._rt, sizeof(sdzks));
-    if ((depos_order+2 - diu) > UGLY_SIZE)
-        printf("UH OH!!! Your ugly array was not big enough for k, %d\n", (depos_order+2 - dku));
-
+    //SWAPZ
     for (int j=djl; j<=depos_order+2-dju; j++) {
-        memset(sdzks, 0._rt, sizeof(sdzks));
         for (int k=dkl; k<=depos_order+1-dku; k++) {
             for (int i=dil; i<=depos_order+2-diu; i++) {
-                sdzks[i] += wqz*(sz_old[k] - sz_new[k])*(
-                    one_third*(sx_new[i]*sy_new[j] + sx_old[i]*sy_old[j])
-                   +one_sixth*(sx_new[i]*sy_old[j] + sx_old[i]*sy_new[j]));
-                amrex::Gpu::Atomic::AddNoRet( &j_buff(lo.x+i_new-1+i, lo.y+j_new-1+j, lo.z+k_new-1+k), sdzks[i]);
+                amrex::Real sdzk=0;
+                for (int inK=dkl; inK<=k; inK++){
+                    sdzk += wqz*(sz_old[inK] - sz_new[inK])*(
+                        one_third*(sx_new[i]*sy_new[j] + sx_old[i]*sy_old[j])
+                       +one_sixth*(sx_new[i]*sy_old[j] + sx_old[i]*sy_new[j]));
+                }
+                amrex::Gpu::Atomic::AddNoRet( &j_buff(lo.x+i_new-1+i, lo.y+j_new-1+j, lo.z+k_new-1+k), sdzk);
             }
         }
     }
