@@ -1,4 +1,4 @@
-#define UGLY_SIZE 7
+#define UGLY_SIZE 6
 /* Copyright 2022 Noah Kaplan, Andrew Myers, Phil Miller
  *
  * This file is part of WarpX.
