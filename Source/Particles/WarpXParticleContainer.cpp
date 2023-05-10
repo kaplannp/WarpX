@@ -466,6 +466,7 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
         //sort particles by bin
         WARPX_PROFILE_VAR_START(blp_sort);
         amrex::DenseBins<ParticleType> bins;
+        unsigned int* tileSortPerm = new unsigned int[bins.numItems()];
         {
             auto& ptile = ParticlesAt(lev, pti);
             auto& aos = ptile.GetArrayOfStructs();
@@ -484,28 +485,24 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
                     });
             //It's gotta happen here
             //using index_type = typename decltype(m_bins)::index_type;
-            using index_type = int;
+            using index_type = unsigned int;
             auto tilePerm = bins.permutationPtr();
-            //TODO keep an eye on this. potential for screwing up the amrex/warpx xyz
-            IntVect idx_type = IntVect(jx_fab.box().type(),
-                                       jy_fab.box().type(),
-                                       jz_fab.box().type());
-            //TODO call a free somewhere
-            index_type* tileSortPerm = new index_type[bins.numItems()];
+            IntVect idx_type = WarpX::sort_idx_type;
+            //TODO change scope
             const auto offsets_ptr = bins.offsetsPtr();
-            for (int bin_id = 0; bin_id < a_bins.numBins(); bin_id++){
+            for (int bin_id = 0; bin_id < bins.numBins(); bin_id++){
                 const unsigned int bin_start = offsets_ptr[bin_id];
                 const unsigned int bin_stop = offsets_ptr[bin_id+1];
                 //TODO hack. can't find product for intvect
                 const unsigned int nCells = bin_size[0]*bin_size[1]*bin_size[2];
                 //const unsigned int nBins = bin_stop - bin_start;
                 Gpu::DeviceVector<index_type> outPerm; //TODO hopefully you can read this outside
-                PermutationForDepositionSpesh (outPerm, nCells, ptile, box, geom,
+                PermutationForDepositionSpesh (outPerm, nCells, aos().dataPtr(), box, geom,
                         idx_type, tilePerm);
 
                 //load everything from the output of the kernel into our local
                 //permutation array
-                for (int i = bin_start; i < bin_stop; i++){
+                for (unsigned int i = bin_start; i < bin_stop; i++){
                     tileSortPerm[i] = outPerm[i-bin_start];
                 }
             }
@@ -567,24 +564,28 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
                     uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
                     jx_fab, jy_fab, jz_fab, np_to_depose, relative_time, dx,
                     xyzmin, lo, q, WarpX::n_rz_azimuthal_modes, cost,
-                    WarpX::load_balance_costs_update_algo, bins, box, geom, max_tbox_size);
+                    WarpX::load_balance_costs_update_algo, bins, box, geom, max_tbox_size,
+                    tileSortPerm);
             } else if (WarpX::nox == 2){
                 doDepositionSharedShapeN<2>(
                     GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
                     uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
                     jx_fab, jy_fab, jz_fab, np_to_depose, relative_time, dx,
                     xyzmin, lo, q, WarpX::n_rz_azimuthal_modes, cost,
-                    WarpX::load_balance_costs_update_algo, bins, box, geom, max_tbox_size);
+                    WarpX::load_balance_costs_update_algo, bins, box, geom, max_tbox_size,
+                    tileSortPerm);
             } else if (WarpX::nox == 3){
                 doDepositionSharedShapeN<3>(
                     GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
                     uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
                     jx_fab, jy_fab, jz_fab, np_to_depose, relative_time, dx,
                     xyzmin, lo, q, WarpX::n_rz_azimuthal_modes, cost,
-                    WarpX::load_balance_costs_update_algo, bins, box, geom, max_tbox_size);
+                    WarpX::load_balance_costs_update_algo, bins, box, geom, max_tbox_size,
+                    tileSortPerm);
             }
             WARPX_PROFILE_VAR_STOP(direct_current_dep_kernel);
         }
+        free(tileSortPerm);
     }
     // If not doing shared memory deposition, call normal kernels
     else {
@@ -669,7 +670,6 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
     (*jz)[pti].atomicAdd(local_jz[thread_num], tbz, tbz, 0, 0, jz->nComp());
     WARPX_PROFILE_VAR_STOP(blp_accumulate);
 #endif
-    free(tileSortPerm);
 }
 
 void
