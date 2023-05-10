@@ -482,7 +482,36 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
                         auto tid = getTileIndex(iv, box, true, bin_size, tbox);
                         return static_cast<unsigned int>(tid);
                     });
+            //It's gotta happen here
+            //using index_type = typename decltype(m_bins)::index_type;
+            using index_type = int;
+            auto tilePerm = bins.permutationPtr();
+            //TODO keep an eye on this. potential for screwing up the amrex/warpx xyz
+            IntVect idx_type = IntVect(jx_fab.box().type(),
+                                       jy_fab.box().type(),
+                                       jz_fab.box().type());
+            //TODO call a free somewhere
+            index_type* tileSortPerm = new index_type[bins.numItems()];
+            const auto offsets_ptr = bins.offsetsPtr();
+            for (int bin_id = 0; bin_id < a_bins.numBins(); bin_id++){
+                const unsigned int bin_start = offsets_ptr[bin_id];
+                const unsigned int bin_stop = offsets_ptr[bin_id+1];
+                //TODO hack. can't find product for intvect
+                const unsigned int nCells = bin_size[0]*bin_size[1]*bin_size[2];
+                //const unsigned int nBins = bin_stop - bin_start;
+                Gpu::DeviceVector<index_type> outPerm; //TODO hopefully you can read this outside
+                PermutationForDepositionSpesh (outPerm, nCells, ptile, box, geom,
+                        idx_type, tilePerm);
+
+                //load everything from the output of the kernel into our local
+                //permutation array
+                for (int i = bin_start; i < bin_stop; i++){
+                    tileSortPerm[i] = outPerm[i-bin_start];
+                }
+            }
+
         }
+        //TODO pass the permutation array
         WARPX_PROFILE_VAR_STOP(blp_sort);
         WARPX_PROFILE_VAR_START(blp_get_max_tilesize);
             //get the maximum size necessary for shared mem
@@ -640,6 +669,7 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
     (*jz)[pti].atomicAdd(local_jz[thread_num], tbz, tbz, 0, 0, jz->nComp());
     WARPX_PROFILE_VAR_STOP(blp_accumulate);
 #endif
+    free(tileSortPerm);
 }
 
 void
