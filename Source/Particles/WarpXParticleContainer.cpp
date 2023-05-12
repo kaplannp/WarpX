@@ -466,7 +466,9 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
         //sort particles by bin
         WARPX_PROFILE_VAR_START(blp_sort);
         amrex::DenseBins<ParticleType> bins;
-        unsigned int* tileSortPerm = new unsigned int[bins.numItems()];
+        //TODO free this somewhere
+        //printf("old = %d\n", bins.numItems());
+        unsigned int* tileSortPerm = new unsigned int[np_to_depose];
         {
             auto& ptile = ParticlesAt(lev, pti);
             auto& aos = ptile.GetArrayOfStructs();
@@ -490,27 +492,49 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
             IntVect idx_type = WarpX::sort_idx_type;
             //TODO change scope
             const auto offsets_ptr = bins.offsetsPtr();
-            for (int bin_id = 0; bin_id < bins.numBins(); bin_id++){
+            //TODO numBins()-1 might misss the last one 
+            for (int bin_id = 0; bin_id < bins.numBins()-1; bin_id++){
                 const unsigned int bin_start = offsets_ptr[bin_id];
                 const unsigned int bin_stop = offsets_ptr[bin_id+1];
-                //TODO hack. can't find product for intvect
+                ////TODO hack. can't find product for intvect
                 const unsigned int nCells = bin_size[0]*bin_size[1]*bin_size[2];
-                //const unsigned int nBins = bin_stop - bin_start;
-                Gpu::DeviceVector<index_type> outPerm; //TODO hopefully you can read this outside
-                PermutationForDepositionSpesh (outPerm, nCells, aos().dataPtr(), box, geom,
-                        idx_type, tilePerm);
+                const unsigned int nParticlesInBin = bin_stop - bin_start;
+                Gpu::DeviceVector<index_type> outPerm;
+
+                //I'll never be satisfied until I try this, so I'm at least gonna try it
+                Box tbox;
+                auto iv = getParticleCell(aos().dataPtr()[tilePerm[bin_start]], plo, dxi, domain);
+                AMREX_ASSERT(box.contains(iv));
+                auto tid = getTileIndex(iv, box, true, bin_size, tbox);
+
+                //TODO this last parameter is just for debugging
+                PermutationForDepositionSpesh (outPerm, nParticlesInBin, aos().dataPtr(), tbox, 
+                        geom, idx_type, tilePerm + bin_start, nCells, bins.numItems());
 
                 //load everything from the output of the kernel into our local
                 //permutation array
+                int max = 0;
                 for (unsigned int i = bin_start; i < bin_stop; i++){
                     tileSortPerm[i] = outPerm[i-bin_start];
+                    int temp = outPerm[i-bin_start];
+                    if (max < temp)
+                        max = temp;
                 }
+               // printf("--------------\n");
+               // printf("max = %d\n and binSize = %d\n", max, bin_stop-bin_start); 
+               // printf("nCells = %d\n", nCells);
+               // //printf("samling outPerm[0] = %d\t outPerm[48] = %d\t outPerm[124] = %d\n", outPerm[0], outPerm[48], outPerm[124]); // This line causes illegal memory access in some case
+               // //max is generally 124, if each was indexed 12345... for 125, that's make sense
+               // //bin_stop-bin_start is variable. generaly around 80
+               // printf("outPermSize = %d\n", outPerm.size()); //always 125 (5x5x5 tsize)
+
             }
 
         }
         //TODO pass the permutation array
         WARPX_PROFILE_VAR_STOP(blp_sort);
         WARPX_PROFILE_VAR_START(blp_get_max_tilesize);
+        printf("escaped sort\n");
             //get the maximum size necessary for shared mem
             // get tile boxes
         //get the maximum size necessary for shared mem
@@ -585,7 +609,7 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
             }
             WARPX_PROFILE_VAR_STOP(direct_current_dep_kernel);
         }
-        free(tileSortPerm);
+        delete[] tileSortPerm;
     }
     // If not doing shared memory deposition, call normal kernels
     else {
