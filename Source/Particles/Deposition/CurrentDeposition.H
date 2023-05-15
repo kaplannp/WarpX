@@ -441,6 +441,11 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
         KernelTimer kernelTimer(cost && load_balance_costs_update_algo
                                 == LoadBalanceCostsUpdateAlgo::GpuClock, cost_real);
 #endif
+        //printf("kernel entered\n"); //not printed? 
+        //TODO it appears that this piece is not printed. This would indicate that the data is not being moved into cuda mem. you must do yourself
+        //printf("one more\n"); //ok
+        //printf("tileSortPerm = %d\n", tileSortPerm);//ok
+        //printf("tileSortPerm[1] = %d\n", tileSortPerm[1]);
         const int bin_id = blockIdx.x;
         const unsigned int bin_start = offsets_ptr[bin_id];
         const unsigned int bin_stop = offsets_ptr[bin_id+1];
@@ -451,7 +456,8 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
         amrex::Box buffer_box;
         {
             ParticleReal xp, yp, zp;
-            GetPosition(permutation[bin_start], xp, yp, zp);
+            //GetPosition(permutation[tileSortPerm[bin_start]], xp, yp, zp);
+            GetPosition(tileSortPerm[bin_start], xp, yp, zp);
 #if defined(WARPX_DIM_3D)
             IntVect iv = IntVect(int( amrex::Math::floor((xp-plo[0]) * dxiarr[0]) ),
                                  int( amrex::Math::floor((yp-plo[1]) * dxiarr[1]) ),
@@ -489,8 +495,10 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
         __syncthreads();
         for (unsigned int ip_orig = bin_start+threadIdx.x; ip_orig<bin_stop; ip_orig += blockDim.x)
         {
+            unsigned int ip = tileSortPerm[ip_orig];
+            //printf("ip is %d\n", ip);
             //unsigned int ip = permutation[tileSortPerm[ip_orig]];
-            unsigned int ip = permutation[ip_orig];
+            //unsigned int ip = permutation[ip_orig];
             depositComponent<depos_order>(GetPosition, wp, uxp, uyp, uzp, ion_lev, jx_buff, jx_type,
                                           relative_time, dx, xyzmin, lo, q, n_rz_azimuthal_modes,
                                           ip, zdir, NODE, CELL, 0);
@@ -505,8 +513,9 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
         __syncthreads();
         for (unsigned int ip_orig = bin_start+threadIdx.x; ip_orig<bin_stop; ip_orig += blockDim.x)
         {
+            unsigned int ip = tileSortPerm[ip_orig];
             //unsigned int ip = permutation[tileSortPerm[ip_orig]];
-            unsigned int ip = permutation[ip_orig];
+            //unsigned int ip = permutation[ip_orig];
             depositComponent<depos_order>(GetPosition, wp, uxp, uyp, uzp, ion_lev, jy_buff, jy_type,
                                           relative_time, dx, xyzmin, lo, q, n_rz_azimuthal_modes,
                                           ip, zdir, NODE, CELL, 1);
@@ -521,8 +530,9 @@ void doDepositionSharedShapeN (const GetParticlePosition& GetPosition,
         __syncthreads();
         for (unsigned int ip_orig = bin_start+threadIdx.x; ip_orig<bin_stop; ip_orig += blockDim.x)
         {
+            unsigned int ip = tileSortPerm[ip_orig];
             //unsigned int ip = permutation[tileSortPerm[ip_orig]];
-            unsigned int ip = permutation[ip_orig];
+            //unsigned int ip = permutation[ip_orig];
             depositComponent<depos_order>(GetPosition, wp, uxp, uyp, uzp, ion_lev, jz_buff, jz_type,
                                           relative_time, dx, xyzmin, lo, q, n_rz_azimuthal_modes,
                                           ip, zdir, NODE, CELL, 2);

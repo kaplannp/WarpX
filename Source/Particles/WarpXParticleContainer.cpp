@@ -515,12 +515,15 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
                 //permutation array
                 int max = 0;
                 for (unsigned int i = bin_start; i < bin_stop; i++){
-                    tileSortPerm[i] = outPerm[i-bin_start];
+                    //printf("outPerm[i-bin_start] = %d\n",outPerm[i-bin_start]);
+                    //printf("tilePerm[outPerm[i-bin_start] + bin_start] = %d\n", tilePerm[outPerm[i-bin_start] + bin_start]);
+                    tileSortPerm[i] = tilePerm[outPerm[i-bin_start] + bin_start];
+                    //tileSortPerm[i] = outPerm[i-bin_start] + bin_start;
                     int temp = outPerm[i-bin_start];
                     if (max < temp)
                         max = temp;
                 }
-               // printf("--------------\n");
+                //printf("--------------\n");
                // printf("max = %d\n and binSize = %d\n", max, bin_stop-bin_start); 
                // printf("nCells = %d\n", nCells);
                // //printf("samling outPerm[0] = %d\t outPerm[48] = %d\t outPerm[124] = %d\n", outPerm[0], outPerm[48], outPerm[124]); // This line causes illegal memory access in some case
@@ -535,6 +538,10 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
         WARPX_PROFILE_VAR_STOP(blp_sort);
         WARPX_PROFILE_VAR_START(blp_get_max_tilesize);
         printf("escaped sort\n");
+        //START A MALLOCING
+        unsigned int* tileSortPermG = new unsigned int[np_to_depose];
+        cudaMalloc(&tileSortPermG, sizeof(unsigned int)*np_to_depose);
+        cudaMemcpy(tileSortPermG, tileSortPerm, sizeof(unsigned int)*np_to_depose, cudaMemcpyHostToDevice);
             //get the maximum size necessary for shared mem
             // get tile boxes
         //get the maximum size necessary for shared mem
@@ -581,6 +588,9 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
             amrex::Abort("Cannot do shared memory deposition with Vay algorithm");
         }
         else {
+            //printf("tileSortPerm = %d", tileSortPerm);
+            //printf("tileSortPerm[2] = %d", tileSortPerm[2]);
+            //printf("tileSortPerm[3] = %d", tileSortPerm[3]);
             WARPX_PROFILE_VAR_START(direct_current_dep_kernel);
             if        (WarpX::nox == 1){
                 doDepositionSharedShapeN<1>(
@@ -605,11 +615,12 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
                     jx_fab, jy_fab, jz_fab, np_to_depose, relative_time, dx,
                     xyzmin, lo, q, WarpX::n_rz_azimuthal_modes, cost,
                     WarpX::load_balance_costs_update_algo, bins, box, geom, max_tbox_size,
-                    tileSortPerm);
+                    tileSortPermG);
             }
             WARPX_PROFILE_VAR_STOP(direct_current_dep_kernel);
         }
         delete[] tileSortPerm;
+        cudaFree(tileSortPermG);
     }
     // If not doing shared memory deposition, call normal kernels
     else {
