@@ -1348,7 +1348,8 @@ void doEsirkepovDepositionSharedShapeN (const GetParticlePosition& GetPosition,
                                const amrex::DenseBins<WarpXParticleContainer::ParticleType>& a_bins,
                                const amrex::Box& box,
                                const amrex::Geometry& geom,
-                               const amrex::IntVect& a_tbox_max_size)
+                               const amrex::IntVect& a_tbox_max_size,
+                               const unsigned int* tileSortPerm)
 {
     using namespace amrex;
 
@@ -1432,7 +1433,7 @@ void doEsirkepovDepositionSharedShapeN (const GetParticlePosition& GetPosition,
         amrex::Box buffer_box_z;
         {
             ParticleReal xp, yp, zp;
-            GetPosition(permutation[bin_start], xp, yp, zp);
+            GetPosition(tileSortPerm[bin_start], xp, yp, zp);
 #if defined(WARPX_DIM_3D)
             IntVect iv = IntVect(int( amrex::Math::floor((xp-plo[0]) * dxiarr[0]) ),
                                  int( amrex::Math::floor((yp-plo[1]) * dxiarr[1]) ),
@@ -1485,7 +1486,8 @@ void doEsirkepovDepositionSharedShapeN (const GetParticlePosition& GetPosition,
         for (unsigned int ip_orig = bin_start+threadIdx.x; ip_orig<bin_stop; ip_orig += blockDim.x)
 #endif
         {
-            unsigned int ip = permutation[ip_orig];
+            unsigned int ip = tileSortPerm[ip_orig];
+            //unsigned int ip = permutation[ip_orig];
             depositEsirkepovComponentX<depos_order>(GetPosition, wp, uxp, uyp, uzp, ion_lev, jx_buff,// jx_type,
                                           dt, relative_time, dx, xyzmin, lo, q, n_rz_azimuthal_modes,
                                           ip); 
@@ -1506,7 +1508,8 @@ void doEsirkepovDepositionSharedShapeN (const GetParticlePosition& GetPosition,
         for (unsigned int ip_orig = bin_start+threadIdx.x; ip_orig<bin_stop; ip_orig += blockDim.x)
 #endif
         {
-            unsigned int ip = permutation[ip_orig];
+            unsigned int ip = tileSortPerm[ip_orig];
+            //unsigned int ip = permutation[ip_orig];
             depositEsirkepovComponentY<depos_order>(GetPosition, wp, uxp, uyp, uzp, ion_lev, jy_buff,// jy_type,
                                           dt, relative_time, dx, xyzmin, lo, q, n_rz_azimuthal_modes,
                                           ip); 
@@ -1527,7 +1530,8 @@ void doEsirkepovDepositionSharedShapeN (const GetParticlePosition& GetPosition,
         for (unsigned int ip_orig = bin_start+threadIdx.x; ip_orig<bin_stop; ip_orig += blockDim.x)
 #endif
         {
-            unsigned int ip = permutation[ip_orig];
+            unsigned int ip = tileSortPerm[ip_orig];
+            //unsigned int ip = permutation[ip_orig];
             depositEsirkepovComponentZ<depos_order>(GetPosition, wp, uxp, uyp, uzp, ion_lev, jz_buff, //jz_type,
                                           dt, relative_time, dx, xyzmin, lo, q, n_rz_azimuthal_modes,
                                           ip);

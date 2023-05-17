@@ -488,56 +488,107 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
             //It's gotta happen here
             //using index_type = typename decltype(m_bins)::index_type;
             using index_type = unsigned int;
-            auto tilePerm = bins.permutationPtr();
+            auto oldSortPerm = bins.permutationPtr();
             IntVect idx_type = WarpX::sort_idx_type;
             //TODO change scope
             const auto offsets_ptr = bins.offsetsPtr();
             //TODO numBins()-1 might misss the last one 
-            for (int bin_id = 0; bin_id < bins.numBins()-1; bin_id++){
+            //LOOK INTO THIS
+            //PRETTY SURE THIS IS RIGHT
+            //ALMOST CERTAIN THIS IS RIGHT
+            for (int bin_id = 0; bin_id < bins.numBins(); bin_id++){
                 const unsigned int bin_start = offsets_ptr[bin_id];
                 const unsigned int bin_stop = offsets_ptr[bin_id+1];
-                ////TODO hack. can't find product for intvect
-                const unsigned int nCells = bin_size[0]*bin_size[1]*bin_size[2];
-                const unsigned int nParticlesInBin = bin_stop - bin_start;
-                Gpu::DeviceVector<index_type> outPerm;
+                if (bin_start != bin_stop){
 
-                //I'll never be satisfied until I try this, so I'm at least gonna try it
-                Box tbox;
-                auto iv = getParticleCell(aos().dataPtr()[tilePerm[bin_start]], plo, dxi, domain);
-                AMREX_ASSERT(box.contains(iv));
-                auto tid = getTileIndex(iv, box, true, bin_size, tbox);
+                    ////TODO hack. can't find product for intvect
+                    const unsigned int nCells = bin_size[0]*bin_size[1]*bin_size[2];
+                    const unsigned int nParticlesInBin = bin_stop - bin_start;
+                    Gpu::DeviceVector<index_type> outPerm;
 
-                //TODO this last parameter is just for debugging
-                PermutationForDepositionSpesh (outPerm, nParticlesInBin, aos().dataPtr(), tbox, 
-                        geom, idx_type, tilePerm + bin_start, nCells, bins.numItems());
+                    //I'll never be satisfied until I try this, so I'm at least gonna try it
+                    Box tbox;
+                    auto iv = getParticleCell(aos().dataPtr()[oldSortPerm[bin_start]], plo, dxi, domain);
+                    AMREX_ASSERT(box.contains(iv));
+                    auto tid = getTileIndex(iv, box, true, bin_size, tbox);
 
-                //load everything from the output of the kernel into our local
-                //permutation array
-                int max = 0;
-                for (unsigned int i = bin_start; i < bin_stop; i++){
-                    //printf("outPerm[i-bin_start] = %d\n",outPerm[i-bin_start]);
-                    //printf("tilePerm[outPerm[i-bin_start] + bin_start] = %d\n", tilePerm[outPerm[i-bin_start] + bin_start]);
-                    tileSortPerm[i] = tilePerm[outPerm[i-bin_start] + bin_start];
-                    //tileSortPerm[i] = outPerm[i-bin_start] + bin_start;
-                    int temp = outPerm[i-bin_start];
-                    if (max < temp)
-                        max = temp;
+                    //TODO this last parameter is just for debugging
+                    PermutationForDepositionSpesh (outPerm, nParticlesInBin, aos().dataPtr(), tbox, 
+                            geom, idx_type, oldSortPerm + bin_start, nCells, bins.numItems());
+
+                    //load everything from the output of the kernel into our local
+                    //permutation array
+                    int max = 0;
+                    for (unsigned int i = bin_start; i < bin_stop; i++){
+                        //printf("outPerm[i-bin_start] = %d\n",outPerm[i-bin_start]);
+                        //printf("oldSortPerm[outPerm[i-bin_start] + bin_start] = %d\n", oldSortPerm[outPerm[i-bin_start] + bin_start]);
+                        tileSortPerm[i] = oldSortPerm[outPerm[i-bin_start] + bin_start];
+                        //tileSortPerm[i] = outPerm[i-bin_start] + bin_start;
+                        int temp = outPerm[i-bin_start];
+                        if (max < temp)
+                            max = temp;
+                    }
+                    //Check to ensure order is not screwed up
+                    for (unsigned int i = bin_start; i < bin_stop; i++){
+                        unsigned int index = tileSortPerm[i];
+                        bool found = false;
+                        for (unsigned int j = bin_start; j < bin_stop; j++){
+                            if (oldSortPerm[j] == index){
+                                found = true;
+                                break;
+                            }
+                        }
+                        if (!found){
+                            printf("Badness. For range %d:%d, index %d was in tileSortPerm, but not in oldSortPerm\n", bin_start, bin_stop, index);
+//                        } else {
+//                            printf("fine\n");
+                        }
+                    }
+                    //Check to ensure order is different
+                    bool same = true;
+                    for (unsigned int i = bin_start; i < bin_stop; i++){
+                        if (oldSortPerm[i] != tileSortPerm[i]){
+                            same = false;
+                            break;
+                        }
+                    }
+                    if (same)
+                        printf("THE SAME!!!!\n");
+
+                    //compare two orderings
+                    //printf("----------OldSort------------\n");
+                    //for (unsigned int i = bin_start; i < bin_stop; i++){
+                    //    IntVect const iv = getParticleCell( aos().dataPtr()[oldSortPerm[i]],
+                    //                   plo, dxi, tbox );
+                    //    printf("OldSort[%d] = %d, particle at cell (%d, %d, %d)\n", i, oldSortPerm[i], iv[0], iv[1], iv[2]);
+                    //    //printf("OldSort[%d] = %d, particle with position (%.10e, %.10e, %.10e) at binI %ld\n", i, oldSortPerm[i], px, py, pz, bxI);
+                    //}
+                    //printf("----------NewSort------------\n");
+                    //for (unsigned int i = bin_start; i < bin_stop; i++){
+                    //    //ParticleReal px, py, pz;
+                    //    //GetPosition(tileSortPerm[i], px, py, pz);
+                    //    IntVect const iv = getParticleCell( aos().dataPtr()[tileSortPerm[i]],
+                    //                   plo, dxi, tbox );
+                    //    printf("NewSort[%d] = %d, particle at cell (%d, %d, %d)\n", i, tileSortPerm[i], iv[0], iv[1], iv[2]);
+                    //    //printf("NewSort[%d] = %d, particle with position (%.10e, %.10e, %.10e) at binI %ld\n", i, tileSortPerm[i], px, py, pz, bxI);
+                    //}
+
+                    //printf("--------------\n");
+                    //printf("max = %d\n and binSize = %d\n", max, bin_stop-bin_start); 
+                    // printf("nCells = %d\n", nCells);
+                    // //printf("samling outPerm[0] = %d\t outPerm[48] = %d\t outPerm[124] = %d\n", outPerm[0], outPerm[48], outPerm[124]); // This line causes illegal memory access in some case
+                    // //max is generally 124, if each was indexed 12345... for 125, that's make sense
+                    // //bin_stop-bin_start is variable. generaly around 80
+                    // printf("outPermSize = %d\n", outPerm.size()); //always 125 (5x5x5 tsize)
+
                 }
-                //printf("--------------\n");
-               // printf("max = %d\n and binSize = %d\n", max, bin_stop-bin_start); 
-               // printf("nCells = %d\n", nCells);
-               // //printf("samling outPerm[0] = %d\t outPerm[48] = %d\t outPerm[124] = %d\n", outPerm[0], outPerm[48], outPerm[124]); // This line causes illegal memory access in some case
-               // //max is generally 124, if each was indexed 12345... for 125, that's make sense
-               // //bin_stop-bin_start is variable. generaly around 80
-               // printf("outPermSize = %d\n", outPerm.size()); //always 125 (5x5x5 tsize)
-
             }
 
         }
+        printf("escaped sort\n");
         //TODO pass the permutation array
         WARPX_PROFILE_VAR_STOP(blp_sort);
         WARPX_PROFILE_VAR_START(blp_get_max_tilesize);
-        printf("escaped sort\n");
         //START A MALLOCING
         unsigned int* tileSortPermG = new unsigned int[np_to_depose];
         cudaMalloc(&tileSortPermG, sizeof(unsigned int)*np_to_depose);
@@ -566,21 +617,24 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
                     uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
                     jx_fab, jy_fab, jz_fab, np_to_depose, dt, relative_time, dx,
                     xyzmin, lo, q, WarpX::n_rz_azimuthal_modes, cost,
-                    WarpX::load_balance_costs_update_algo, bins, box, geom, max_tbox_size);
+                    WarpX::load_balance_costs_update_algo, bins, box, geom, max_tbox_size,
+                    tileSortPermG);
             } else if (WarpX::nox == 2){
                 doEsirkepovDepositionSharedShapeN<2>(
                     GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
                     uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
                     jx_fab, jy_fab, jz_fab, np_to_depose, dt, relative_time, dx,
                     xyzmin, lo, q, WarpX::n_rz_azimuthal_modes, cost,
-                    WarpX::load_balance_costs_update_algo, bins, box, geom, max_tbox_size);
+                    WarpX::load_balance_costs_update_algo, bins, box, geom, max_tbox_size,
+                    tileSortPermG);
             } else if (WarpX::nox == 3){
                 doEsirkepovDepositionSharedShapeN<3>(
                     GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
                     uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
                     jx_fab, jy_fab, jz_fab, np_to_depose, dt, relative_time, dx,
                     xyzmin, lo, q, WarpX::n_rz_azimuthal_modes, cost,
-                    WarpX::load_balance_costs_update_algo, bins, box, geom, max_tbox_size);
+                    WarpX::load_balance_costs_update_algo, bins, box, geom, max_tbox_size,
+                    tileSortPermG);
             }
             WARPX_PROFILE_VAR_STOP(esirkepov_current_dep_kernel);
         }
