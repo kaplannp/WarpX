@@ -529,21 +529,21 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
                             max = temp;
                     }
                     //Check to ensure order is not screwed up
-                    for (unsigned int i = bin_start; i < bin_stop; i++){
-                        unsigned int index = tileSortPerm[i];
-                        bool found = false;
-                        for (unsigned int j = bin_start; j < bin_stop; j++){
-                            if (oldSortPerm[j] == index){
-                                found = true;
-                                break;
-                            }
-                        }
-                        if (!found){
-                            printf("Badness. For range %d:%d, index %d was in tileSortPerm, but not in oldSortPerm\n", bin_start, bin_stop, index);
-//                        } else {
-//                            printf("fine\n");
-                        }
-                    }
+                    //for (unsigned int i = bin_start; i < bin_stop; i++){
+                    //    unsigned int index = tileSortPerm[i];
+                    //    bool found = false;
+                    //    for (unsigned int j = bin_start; j < bin_stop; j++){
+                    //        if (oldSortPerm[j] == index){
+                    //            found = true;
+                    //            break;
+                    //        }
+                    //    }
+                    //    if (!found){
+                    //        printf("Badness. For range %d:%d, index %d was in tileSortPerm, but not in oldSortPerm\n", bin_start, bin_stop, index);
+//                  //      } else {
+//                  //          printf("fine\n");
+                    //    }
+                    //}
                     //Check to ensure order is different
                     bool same = true;
                     for (unsigned int i = bin_start; i < bin_stop; i++){
