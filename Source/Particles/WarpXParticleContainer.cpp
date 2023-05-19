@@ -586,16 +586,37 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
 
         }
         printf("escaped sort\n");
+        //auto& ptile = ParticlesAt(lev, pti);
+        //auto& aos = ptile.GetArrayOfStructs();
+        //auto pstruct_ptr = aos().dataPtr();
+        //RealVect iv = pstruct_ptr[0].pos();
+        //printf("dunno what type this is particle[0] = (%.10e, %.10e, %.10e)\n", iv[0], iv[1], iv[2]);
+        auto& ptile = ParticlesAt(lev, pti);
+        auto& aos = ptile.GetArrayOfStructs();
+        auto pstruct_ptr = aos().dataPtr();
+        for(int i = 0; i < pti.numParticles(); i++){
+            unsigned int redirectInd = tileSortPerm[i];
+            //printf("pstruct_ptr[%d] = ", redirectInd);
+            //RealVect iv = pstruct_ptr[redirectInd].pos();
+            //printf("(%.10e, %.10e, %.10e)\n", iv[0], iv[1], iv[2]);
+            if (tileSortPerm[i] > pti.numParticles()){
+                printf("out of bounds high\n");
+            } else if (tileSortPerm[i] < 0){
+                printf("out of bounds low\n");
+            }
+
+        }
+        printf("traversed and no segfault\n");
+                
+        ReorderParticles(lev, pti, tileSortPerm);
+        //ptile = ParticlesAt(lev, pti);
+        //aos = ptile.GetArrayOfStructs();
+        //pstruct_ptr = aos().dataPtr();
+        //iv = pstruct_ptr[0].pos();
+        //printf("dunno what type this is particle[0] = (%.10e, %.10e, %.10e)\n", iv[0], iv[1], iv[2]);
         //TODO pass the permutation array
         WARPX_PROFILE_VAR_STOP(blp_sort);
         WARPX_PROFILE_VAR_START(blp_get_max_tilesize);
-        //START A MALLOCING
-        unsigned int* tileSortPermG = new unsigned int[np_to_depose];
-        cudaMalloc(&tileSortPermG, sizeof(unsigned int)*np_to_depose);
-        cudaMemcpy(tileSortPermG, tileSortPerm, sizeof(unsigned int)*np_to_depose, cudaMemcpyHostToDevice);
-            //get the maximum size necessary for shared mem
-            // get tile boxes
-        //get the maximum size necessary for shared mem
 #if AMREX_SPACEDIM > 0
         int sizeX = getMaxTboxAlongDim(box.size()[0], WarpX::shared_tilesize[0]);
 #endif
@@ -617,24 +638,24 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
                     uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
                     jx_fab, jy_fab, jz_fab, np_to_depose, dt, relative_time, dx,
                     xyzmin, lo, q, WarpX::n_rz_azimuthal_modes, cost,
-                    WarpX::load_balance_costs_update_algo, bins, box, geom, max_tbox_size,
-                    tileSortPermG);
+                    WarpX::load_balance_costs_update_algo, bins, box, geom, max_tbox_size
+                    );
             } else if (WarpX::nox == 2){
                 doEsirkepovDepositionSharedShapeN<2>(
                     GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
                     uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
                     jx_fab, jy_fab, jz_fab, np_to_depose, dt, relative_time, dx,
                     xyzmin, lo, q, WarpX::n_rz_azimuthal_modes, cost,
-                    WarpX::load_balance_costs_update_algo, bins, box, geom, max_tbox_size,
-                    tileSortPermG);
+                    WarpX::load_balance_costs_update_algo, bins, box, geom, max_tbox_size
+                    );
             } else if (WarpX::nox == 3){
                 doEsirkepovDepositionSharedShapeN<3>(
                     GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
                     uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
                     jx_fab, jy_fab, jz_fab, np_to_depose, dt, relative_time, dx,
                     xyzmin, lo, q, WarpX::n_rz_azimuthal_modes, cost,
-                    WarpX::load_balance_costs_update_algo, bins, box, geom, max_tbox_size,
-                    tileSortPermG);
+                    WarpX::load_balance_costs_update_algo, bins, box, geom, max_tbox_size
+                    );
             }
             WARPX_PROFILE_VAR_STOP(esirkepov_current_dep_kernel);
         }
@@ -652,29 +673,28 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
                     uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
                     jx_fab, jy_fab, jz_fab, np_to_depose, relative_time, dx,
                     xyzmin, lo, q, WarpX::n_rz_azimuthal_modes, cost,
-                    WarpX::load_balance_costs_update_algo, bins, box, geom, max_tbox_size,
-                    tileSortPerm);
+                    WarpX::load_balance_costs_update_algo, bins, box, geom, max_tbox_size
+                    );
             } else if (WarpX::nox == 2){
                 doDepositionSharedShapeN<2>(
                     GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
                     uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
                     jx_fab, jy_fab, jz_fab, np_to_depose, relative_time, dx,
                     xyzmin, lo, q, WarpX::n_rz_azimuthal_modes, cost,
-                    WarpX::load_balance_costs_update_algo, bins, box, geom, max_tbox_size,
-                    tileSortPerm);
+                    WarpX::load_balance_costs_update_algo, bins, box, geom, max_tbox_size
+                    );
             } else if (WarpX::nox == 3){
                 doDepositionSharedShapeN<3>(
                     GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
                     uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev,
                     jx_fab, jy_fab, jz_fab, np_to_depose, relative_time, dx,
                     xyzmin, lo, q, WarpX::n_rz_azimuthal_modes, cost,
-                    WarpX::load_balance_costs_update_algo, bins, box, geom, max_tbox_size,
-                    tileSortPermG);
+                    WarpX::load_balance_costs_update_algo, bins, box, geom, max_tbox_size
+                    );
             }
             WARPX_PROFILE_VAR_STOP(direct_current_dep_kernel);
         }
         delete[] tileSortPerm;
-        cudaFree(tileSortPermG);
     }
     // If not doing shared memory deposition, call normal kernels
     else {
